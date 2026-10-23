@@ -112,6 +112,20 @@ curl -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
 make test     # starts pgvector Postgres, runs pytest (chunking, auth, full upload→cited-answer flow)
 ```
 
+### Demo
+
+With the sample Acme Tech documents uploaded, these questions retrieve the corresponding sources:
+
+- “How many casual leaves do I get in a year?” — `leave-policy.pdf`, page 1.
+- “How long is maternity leave?” — `leave-policy.pdf`, page 2.
+- “How do I apply for work from home?” — `leave-policy.pdf`, page 3.
+- “What is the rollback process if production fails?” — `deployment-runbook.txt`.
+- “Quasar luminosity redshift threshold 731” — no-match response with the local fake-embedding setup.
+
+The offline fake embeddings are a deterministic hashing trick, not semantic search. Shared words and hash collisions can retrieve unrelated chunks; for example, “Population of Brazil?” matched an unrelated passage in this demo. The ignored local `.env` uses `MIN_SIMILARITY=0.01` to filter zero-score hits, but this is only a demo workaround. The Helm production default is `0.25`; meaningful semantic retrieval needs real embeddings.
+
+**Demo video:** [Add an unlisted video or Drive link](VIDEO_LINK_HERE)
+
 ## 2. Provision AWS with Terraform
 
 Prereqs: AWS credentials, Terraform ≥ 1.6, helm, kubectl.
