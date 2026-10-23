@@ -1,0 +1,38 @@
+ACME TECH - PAYMENT SERVICE DEPLOYMENT RUNBOOK
+Owner: Platform Team. Last reviewed: September 2026.
+
+1. OVERVIEW
+The payment service is a containerised Java application running on Kubernetes in the
+"payments" namespace. Deployments are triggered by the GitHub Actions workflow
+"deploy-payments" on every merge to the main branch.
+
+2. HOW TO DEPLOY THE PAYMENT SERVICE
+Step 1: Merge your pull request into main. The pipeline builds the image and tags it with
+the git commit SHA.
+Step 2: Wait for the "test" and "build" jobs to pass. They take about 8 minutes.
+Step 3: Approve the "production" environment gate in GitHub. Only members of the release
+team can approve.
+Step 4: The pipeline runs "helm upgrade --atomic" in the payments namespace. Watch it with:
+kubectl -n payments rollout status deploy/payment-service
+Step 5: Verify the health endpoint at /health returns 200 and check the Grafana dashboard
+"Payments Overview" for error rate below 1 percent for 10 minutes.
+
+Deployments are frozen every Friday after 3 PM and during month-end close (last 2 working
+days of each month). Emergency fixes during a freeze need approval from the Engineering
+Manager.
+
+3. ROLLBACK PROCESS IF PRODUCTION FAILS
+If the error rate rises above 5 percent or the health check fails after a deployment:
+Step 1: Announce the incident in the Slack channel #incident-response.
+Step 2: Roll back immediately with: helm rollback payment-service -n payments
+This returns the service to the previous release in under 2 minutes.
+Step 3: Confirm the rollback with kubectl -n payments get pods and check the health endpoint.
+Step 4: Create an incident ticket in Jira with the label "payments-rollback".
+Step 5: Hold a blameless post-incident review within 3 working days.
+Note: the helm --atomic flag already rolls back automatically if the new pods never become
+ready, so a manual rollback is only needed for problems found after the rollout completes.
+
+4. ON-CALL AND ESCALATION
+The on-call engineer is paged through PagerDuty. If there is no response in 15 minutes the
+page escalates to the Engineering Manager. Database issues are escalated to the DBA team
+through the #dba-support channel.

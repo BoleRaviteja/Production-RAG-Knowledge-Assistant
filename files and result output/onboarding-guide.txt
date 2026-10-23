@@ -1,0 +1,32 @@
+ACME TECH - NEW EMPLOYEE ONBOARDING GUIDE
+
+1. YOUR FIRST DAY
+Arrive at 10 AM at the front desk and ask for the People Team. You will receive your laptop,
+ID card, and access to email and Slack. Your buddy will take you for lunch.
+
+2. THE FIRST WEEK
+Day 1: IT setup and security training.
+Day 2: Meet your team and review the 30-60-90 day plan with your manager.
+Day 3 to 5: Read the engineering handbook and set up your development environment.
+Complete the mandatory Information Security and Code of Conduct courses within 7 days.
+
+3. PROBATION
+The probation period is 90 days. During probation you are eligible for casual and sick
+leave but not work from home. A review meeting with your manager happens at day 45 and
+day 90.
+
+4. SALARY AND PAYROLL
+Salary is credited on the last working day of each month. Payslips are available on the HR
+portal. Reimbursement claims must be submitted by the 25th to be included in that month's
+payroll. The company provides health insurance covering the employee, spouse, and up to
+2 children from the first day of employment.
+
+5. LEARNING BUDGET
+Every employee has an annual learning budget of 40000 rupees for courses, books, and
+certifications. Submit the receipt through the HR portal for reimbursement. Cloud
+certifications such as AWS and Kubernetes exams are covered in full.
+
+6. WHO TO ASK
+IT problems: it-support@acmetech.example or Slack #it-help.
+HR and policy questions: hr-help@acmetech.example.
+Access to cloud accounts: raise a ticket in the "Access Request" Jira project.
