@@ -58,7 +58,8 @@ jobs:
       - run: helm template rag helm/rag-assistant > /dev/null
 
   build-push:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Enable after AWS is configured by setting the repository variable DEPLOY_ENABLED=true.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     needs: [test, validate-infra]
     runs-on: ubuntu-latest
     outputs:
