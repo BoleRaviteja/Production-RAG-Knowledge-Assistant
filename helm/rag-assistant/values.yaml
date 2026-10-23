@@ -1,0 +1,80 @@
+replicaCount: 2
+
+image:
+  repository: ""            # set by CI -> <acct>.dkr.ecr.<region>.amazonaws.com/rag-assistant-prod
+  tag: latest               # set by CI -> git SHA
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+# Non-secret settings -> ConfigMap -> env vars
+config:
+  ENVIRONMENT: production
+  LOG_LEVEL: INFO
+  EMBEDDING_PROVIDER: openai
+  EMBEDDING_MODEL: text-embedding-3-small
+  EMBEDDING_DIM: "1536"
+  LLM_PROVIDER: anthropic
+  LLM_MODEL: claude-sonnet-4-6
+  CHUNK_SIZE: "1000"
+  CHUNK_OVERLAP: "150"
+  TOP_K: "5"
+  MIN_SIMILARITY: "0.25"
+
+# Sensitive settings -> Secret. CI fills these from AWS Secrets Manager.
+# Set existingSecret to use a Secret you manage yourself (e.g. External Secrets Operator).
+existingSecret: ""
+secrets:
+  DATABASE_URL: ""
+  JWT_SECRET: ""
+  ANTHROPIC_API_KEY: ""
+  OPENAI_API_KEY: ""
+
+ingress:
+  enabled: true
+  className: alb
+  host: ""                  # e.g. kb.example.com ; empty = match any host
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    # For HTTPS: add an ACM cert + listen-ports '[{"HTTP":80},{"HTTPS":443}]'
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:...
+    # alb.ingress.kubernetes.io/ssl-redirect: "443"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+resources:
+  requests: { cpu: 250m, memory: 384Mi }
+  limits: { cpu: "1", memory: 768Mi }
+
+serviceAccount:
+  create: true
+  annotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  seccompProfile: { type: RuntimeDefault }
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities: { drop: ["ALL"] }
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,9 @@
+__pycache__/
+.venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.terraform/
+*.tfstate*
+*.tfvars
+!terraform.tfvars.example

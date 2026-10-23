@@ -1,0 +1,6 @@
+apiVersion: v2
+name: rag-assistant
+description: Production RAG Knowledge Assistant (FastAPI + pgvector)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

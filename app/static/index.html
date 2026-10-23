@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Knowledge Assistant</title>
+<style>
+:root{--bg:#fff;--fg:#1c1c1e;--mut:#6b7280;--card:#f5f6f8;--bd:#e2e4e9;--ac:#2563eb}
+@media(prefers-color-scheme:dark){:root{--bg:#15171a;--fg:#e8e8ea;--mut:#9aa0a9;--card:#1e2126;--bd:#2d3138;--ac:#6b9bff}}
+body{font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:820px;margin:0 auto;padding:1.5rem}
+h1{font-size:1.3rem}h2{font-size:1rem;margin:0 0 .6rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:1rem;margin:1rem 0}
+input,button{font:inherit;padding:.5rem .7rem;border-radius:6px;border:1px solid var(--bd);background:var(--bg);color:var(--fg)}
+button{background:var(--ac);color:#fff;border:0;cursor:pointer}input[type=text]{width:100%;box-sizing:border-box}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;margin:.4rem 0}.row input{flex:1;min-width:160px}
+.src{border-left:3px solid var(--bd);padding:.3rem .7rem;margin:.5rem 0;font-size:.9rem}.src.cited{border-color:var(--ac)}
+.mut{color:var(--mut);font-size:.85rem}.hide{display:none}pre{white-space:pre-wrap;margin:0;font:inherit}
+</style></head><body>
+<h1>📚 Knowledge Assistant</h1>
+<div id="auth" class="card"><h2>Sign in</h2>
+ <div class="row"><input id="email" placeholder="email"><input id="pw" type="password" placeholder="password (8+ chars)">
+ <button onclick="login()">Login</button><button onclick="reg()">Register</button></div><div id="amsg" class="mut"></div></div>
+<div id="app" class="hide">
+ <div class="mut">Signed in as <span id="who"></span> · <a href="#" onclick="logout()">logout</a> · <a href="/docs">API docs</a></div>
+ <div class="card" id="up"><h2>Documents</h2>
+  <div class="row"><input type="file" id="file" accept=".pdf,.txt,.md"><button onclick="upload()">Upload</button></div>
+  <div id="docs" class="mut"></div></div>
+ <div class="card"><h2>Ask a question</h2>
+  <div class="row"><input type="text" id="q" placeholder="How many casual leaves do I get in a year?" onkeydown="if(event.key==='Enter')ask()"><button onclick="ask()">Ask</button></div>
+  <div id="ans"></div></div>
+</div>
+<script>
+let T=localStorage.getItem('t');const $=i=>document.getElementById(i);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function api(p,o={}){o.headers={...(o.headers||{}),...(T?{Authorization:'Bearer '+T}:{})};
+ const r=await fetch('/api/v1'+p,o);if(r.status===401&&T){logout();}
+ if(!r.ok){let d;try{d=(await r.json()).detail}catch{}throw new Error(typeof d==='string'?d:r.statusText)}
+ return r.status===204?null:r.json()}
+async function login(){try{const f=new URLSearchParams({username:$('email').value,password:$('pw').value});
+ const j=await api('/auth/login',{method:'POST',body:f});T=j.access_token;localStorage.setItem('t',T);start()}catch(e){$('amsg').textContent=e.message}}
+async function reg(){try{await api('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},
+ body:JSON.stringify({email:$('email').value,password:$('pw').value})});$('amsg').textContent='Registered - now login.'}catch(e){$('amsg').textContent=e.message}}
+function logout(){T=null;localStorage.removeItem('t');$('app').classList.add('hide');$('auth').classList.remove('hide')}
+async function start(){try{const me=await api('/auth/me');$('who').textContent=me.email+(me.is_admin?' (admin)':'');
+ $('up').querySelector('.row').classList.toggle('hide',!me.is_admin);$('auth').classList.add('hide');$('app').classList.remove('hide');docs()}catch{logout()}}
+async function docs(){const l=await api('/documents');$('docs').innerHTML=l.map(d=>`<div>${esc(d.filename)} — ${d.status}${d.status==='ready'?' ('+d.num_chunks+' chunks)':''}${d.error?' '+esc(d.error):''}</div>`).join('')||'No documents yet.';
+ if(l.some(d=>['pending','processing'].includes(d.status)))setTimeout(docs,1500)}
+async function upload(){const f=$('file').files[0];if(!f)return;const fd=new FormData();fd.append('file',f);
+ try{await api('/documents',{method:'POST',body:fd});docs()}catch(e){alert(e.message)}}
+async function ask(){$('ans').innerHTML='<span class="mut">Thinking…</span>';
+ try{const r=await api('/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:$('q').value})});
+ $('ans').innerHTML=`<p><pre>${esc(r.answer)}</pre></p><div class="mut">${r.latency_ms} ms · ${esc(r.model)}</div>`+
+ r.sources.map(s=>`<div class="src ${s.cited?'cited':''}"><b>[${s.id}] ${esc(s.filename)}</b>${s.page?' · page '+s.page:''} <span class="mut">score ${s.score}${s.cited?' · cited':''}</span><div class="mut">${esc(s.snippet.slice(0,220))}…</div></div>`).join('')}
+ catch(e){$('ans').textContent='Error: '+e.message}}
+if(T)start();
+</script></body></html>

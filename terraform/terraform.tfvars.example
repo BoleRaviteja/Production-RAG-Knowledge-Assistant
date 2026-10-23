@@ -1,0 +1,5 @@
+region      = "ap-south-1"
+github_repo = "your-org/rag-assistant"
+alert_email = "you@example.com"
+# anthropic_api_key = "sk-ant-..."   # prefer: export TF_VAR_anthropic_api_key=...
+# openai_api_key    = "sk-..."
